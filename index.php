@@ -1,4 +1,21 @@
 <?php
+
+require_once "vendor/autoload.php";
+
+$graph = new Fhaculty\Graph\Graph();
+
+$blue = $graph->createVertex('blue');
+$blue->setAttribute('graphviz.color', 'blue');
+
+$red = $graph->createVertex('red');
+$red->setAttribute('graphviz.color', 'red');
+
+$edge = $blue->createEdgeTo($red);
+$edge->setAttribute('graphviz.color', 'grey');
+
+$graphviz = new Graphp\GraphViz\GraphViz();
+$graphviz->display($graph);
+
 ini_set("display_errors",1);
 
 function debug($var){
@@ -59,14 +76,14 @@ function aStar($pz){
 		if($n_pz->cost()==0) {
 			$goal = $n_pz;
 			break;
-		} 
+		}
 
 		foreach($n_pz->move() as $suc){
 			echo "(".$howmany_opened.")<br />";
 			echo $suc->show();
 			echo "cost: ".$suc->cost()." + ".$depth." = ".($suc->cost()+$depth)."<br /><br />";
 			$howmany_opened++;
-		
+
 			$suc->setParent($n_pz);
 			$cost = $suc->cost() + $depth;
 			$open[] = ["pz"=>$suc,"cost"=>$cost];
@@ -92,26 +109,26 @@ function aStar($pz){
 
 
 function idaStar($pz){
-	global $limit;	
+	global $limit;
 	$cutoff = 0;
 	$howmany_opened = 0;
 	$max_memory_spend = 0;
 	$goal = null;
-	
+
 	while($cutoff < $limit){
 		$depth = 0;
 		$open = [["pz"=>$pz,"cost"=>0]];
 		$cutoff++;
 		echo "<p>cutoff:".$cutoff."</p>";
 		while(count($open)>0){
-			
+
 			$n = array_pop($open);
 			$n_pz = $n["pz"];
 
 			if($n_pz->cost()==0) {
 				$goal = $n_pz;
 				break;
-			} 
+			}
 
 			foreach($n_pz->move() as $suc){
 				//echo "f()=".($suc->cost()+$depth)."<br />";
@@ -120,7 +137,7 @@ function idaStar($pz){
 					echo $suc->show();
 					echo "cost: ".$suc->cost()." + ".$depth." = ".($suc->cost()+$depth)."<br /><br />";
 					$howmany_opened++;
-				
+
 					$suc->setParent($n_pz);
 					$cost = $suc->cost() + $depth;
 					$open[] = ["pz"=>$suc,"cost"=>$cost];

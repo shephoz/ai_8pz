@@ -1,0 +1,13 @@
+{
+    "name": "wozniak385/ai_8pz",
+    "description": "人工知能の宿題",
+    "authors": [
+        {
+            "name": "wozniak385",
+            "email": "clavier.nof@wozniak.jp"
+        }
+    ],
+	"require": {
+	    "graphp/graphviz": "~0.2.0"
+	}
+}
