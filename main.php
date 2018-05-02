@@ -3,11 +3,13 @@ require_once     "EightPz.php";
 require_once      "Solver.php";
 require_once  "SolverNode.php";
 
-$eightPz = new EightPz([
-	0,4,2,
-	1,3,5,
-	6,7,8,
-]);
+$eightPz = new EightPz(
+[
+1,5,4,
+3,2,8,
+6,7,0,
+]
+);
 //$eightPz->shuffle(8);
 $eightPz->display();
 
@@ -17,5 +19,8 @@ while(!$solver->isSolved()){
 	echo "\n--- loop ".$i."---\n";
 	$solver->open();
 	$i++;
-	fgets(STDIN);
+	//if($i>1000) break;
+	//fgets(STDIN);
 }
+
+$solver->evaluate();

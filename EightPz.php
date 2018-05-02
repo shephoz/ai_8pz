@@ -66,7 +66,6 @@ class EightPz{
 			}else{
 				$sw = $swapped->toString();
 				$pf = $this->pointerFrom->toString();
-				echo $sw." vs ".$pf."\n";
 				if($sw != $pf){
 					$swapped->setPointer($this);
 				 	$r[] = $swapped;

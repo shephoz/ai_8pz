@@ -2,8 +2,12 @@
 
 class Solver{
 	private $open = [];
-	private $costFunc = "howmanyWrong";
+	private $opened = [];
+	private $costFunc = "manhattan";
+	//private $costFunc = "howmanyWrong";
 
+	private $time = 0;
+	private $memory = 0;
 	private $isSolved = false;
 
 	public function __construct(EightPz $start){
@@ -22,6 +26,11 @@ class Solver{
 				$best_cost  = $cost;
 			}
 		}
+		if($best_item === null){
+			echo "failed\n";
+			$this->isSolved = true;
+			return;
+		}
 
 		echo "\n--- the best one in open is ... ---\n";
 		$best_item->display();
@@ -33,36 +42,51 @@ class Solver{
 			return;
 		}
 
+		$this->time++;
+
 		echo "\n--- added to open ---\n";
 		foreach($best_item->move() as $moved){
 			$this->pushToOpen($moved);
 			$moved->display($this->costFunc);
 		}
-		echo "\n--- open items is ... ---\n";
-		foreach($this->open as $item){
-			$item->display($this->costFunc);
-		}
+		// echo "\n--- open items is ... ---\n";
+		// foreach($this->open as $item){
+		// 	$item->display($this->costFunc);
+		// }
 
 	}
 
 
 	private function pushToOpen($pushing){
 		$duplicating = false;
-		// foreach($this->open as $comparing){
-		// 	if($pushing->toString() == $comparing->toString())
-		// 		$duplicating = true;
-		// } //ここいるか？
-	 	if(!$duplicating){
+
+		foreach($this->open as $comparing){
+			if($pushing->toString() == $comparing->toString())
+				$duplicating = true;
+		} //ここいるか？
+		foreach($this->opened as $comparing){
+			if($pushing->toString() == $comparing->toString())
+				$duplicating = true;
+		} //ここいるか？
+
+		if(!$duplicating){
 			$this->open[] = $pushing;
+			if($this->memory < count($this->open)) $this->memory = count($this->open);
 		}
 	}
 
 	private function popFromOpen($index){
+		$this->opened[] = $this->open[$index];
 		array_splice($this->open,$index);
 	}
 
 	public function isSolved(){
 		return $this->isSolved;
+	}
+
+	public function evaluate(){
+		echo "time   : ".$this->time."\n";
+		echo "memory : ".$this->memory."\n";
 	}
 
 }
