@@ -4,18 +4,23 @@ class EightPz{
 	private $nums;
 	private $pointerFrom = null;
 
+	private $howmanyMoved = 0;
+	private $whenOpened = [];
+
 	public function __construct($nums=[0,1,2,3,4,5,6,7,8]){
 		$this->nums = $nums;
 	}
 
-	public function shuffle($howmany){
-		$pz = $this;
-		for($i=0;$i<$howmany;$i++){
-			$move = $pz->move();
-			$pz = $move[rand(0,count($move)-1)];
-		}
-		$this->nums = $pz->nums;
+	public function getHowmanyMoved(){
+		return $this->howmanyMoved;
 	}
+	public function setWhenOpened($val){
+		$this->whenOpened[] = $val;
+	}
+
+
+	//----------------------------------------------------
+
 
 	public function toString(){
 		return implode("",$this->nums);
@@ -28,10 +33,22 @@ class EightPz{
 			if($i%3 == 2) $r .= "\n";
 		}
 		echo $r;
-		if($costFunc !== null)
-			echo "(cost : ".$this->cost($costFunc).")\n";
+		if($costFunc !== null){
+			echo "(cost  : ".$this->cost($costFunc).")\n";
+			echo "(moved : ".$this->howmanyMoved." time(s))\n";
+		}
 		echo "\n";
 	}
+
+	public function shuffle($howmany){
+		$pz = $this;
+		for($i=0;$i<$howmany;$i++){
+			$move = $pz->move();
+			$pz = $move[rand(0,count($move)-1)];
+		}
+		$this->nums = $pz->nums;
+	}
+
 
 	private function findNum($num){
 		return array_search($num, $this->nums);
@@ -62,12 +79,14 @@ class EightPz{
 			$swapped = $this->swap($zero,$zero+$dir);
 			if($this->pointerFrom === null){
 				$swapped->setPointer($this);
+				$swapped->howmanyMoved = $this->howmanyMoved + 1;
 				$r[] = $swapped;
 			}else{
 				$sw = $swapped->toString();
 				$pf = $this->pointerFrom->toString();
 				if($sw != $pf){
 					$swapped->setPointer($this);
+					$swapped->howmanyMoved = $this->howmanyMoved + 1;
 				 	$r[] = $swapped;
 				}
 			}
