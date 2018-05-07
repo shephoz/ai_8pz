@@ -3,6 +3,9 @@
 class EightPz{
 	private $nums;
 	private $pointerFrom = null;
+	private $pointerTo   = [];
+
+	private $viewString = "";
 
 	private $howmanyMoved = 0;
 	private $whenOpened = [];
@@ -17,6 +20,15 @@ class EightPz{
 	public function setWhenOpened($val){
 		$this->whenOpened[] = $val;
 	}
+	private function setPointer($to){
+		$this->pointerTo[] = $to;
+		$to->pointerFrom = $this;
+	}
+	public function removePointer(){
+		$this->pointerFrom = null;
+
+	}
+
 
 
 	//----------------------------------------------------
@@ -26,18 +38,23 @@ class EightPz{
 		return implode("",$this->nums);
 	}
 
-	public function display($costFunc = null){
+	public function toViewString($costFunc = null){
 		$r = "";
 		for($i=0;$i<9;$i++){
-			$r .= $this->nums[$i];
+			$r .= $this->nums[$i]." ";
+			if($i == 8)   $r .= "(".implode(",",$this->whenOpened).")";
 			if($i%3 == 2) $r .= "\n";
 		}
-		echo $r;
 		if($costFunc !== null){
-			echo "(cost  : ".$this->cost($costFunc).")\n";
-			echo "(moved : ".$this->howmanyMoved." time(s))\n";
+			$cost  = $this->cost($costFunc);
+			$moved = $this->howmanyMoved;
+		 	$r .= "f(n) = ".$cost." + ".$moved."\n     = ".($cost+$moved)."\n";
 		}
-		echo "\n";
+		return $r;
+	}
+
+	public function display($costFunc = null){
+		echo $this->toViewString($costFunc);
 	}
 
 	public function shuffle($howmany){
@@ -78,14 +95,14 @@ class EightPz{
 		foreach($this->listDir() as $dir){
 			$swapped = $this->swap($zero,$zero+$dir);
 			if($this->pointerFrom === null){
-				$swapped->setPointer($this);
+				$this->setPointer($swapped);
 				$swapped->howmanyMoved = $this->howmanyMoved + 1;
 				$r[] = $swapped;
 			}else{
 				$sw = $swapped->toString();
 				$pf = $this->pointerFrom->toString();
 				if($sw != $pf){
-					$swapped->setPointer($this);
+					$this->setPointer($swapped);
 					$swapped->howmanyMoved = $this->howmanyMoved + 1;
 				 	$r[] = $swapped;
 				}
@@ -142,19 +159,28 @@ class EightPz{
 
 	//----------------------------------------------------
 
-
-	public function setPointer($from){
-		$this->pointerFrom = $from;
+	public function makeTree($g,$costFunc){
+		$this->viewString = $this->toViewString($costFunc);
+		$g->addNode($this->viewString,['shape'=>'box']);
+		if($this->pointerFrom !== null){
+			$g->addEdge([$this->pointerFrom->viewString => $this->viewString]);
+		}
+		foreach($this->pointerTo as $to){
+			$to->makeTree($g,$costFunc);
+		}
 	}
 
-	public function trail($costFunc){
-		echo $this->display($costFunc);
-		echo "\n↑\n";
+	public function trail($g,$costFunc){
+		$this->viewString = $this->toViewString($costFunc);
+		$g->addNode($this->viewString,['shape'=>'box']);
 		$from = $this->pointerFrom;
 		if($from !== null){
-			$from->trail($costFunc);
+			$g->addEdge([$from->viewString => $this->viewString]);
+			$from->trail($g,$costFunc);
 		}else{
-			echo "\nstart\n";
+			$g->addNode("start",['shape'=>'box']);
+			$g->addEdge(["start" => $this->viewString]);
+
 		}
 	}
 

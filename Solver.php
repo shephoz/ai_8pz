@@ -1,4 +1,5 @@
 <?php
+require_once  'Image/GraphViz.php';
 
 class Solver{
 	private $start = null;
@@ -57,7 +58,6 @@ class Solver{
 			}
 		}
 
-
 		echo "\n--- the best one in open is ... ---\n";
 		$best_item->display();
 		$this->popFromOpen($best_index);
@@ -68,7 +68,11 @@ class Solver{
 		if($best_item->isGoal()){
 			echo "--- this is goal ---\n";
 			$this->isSolved = true;
-			$best_item->trail($this->costFunc);
+
+			$trail = new Image_GraphViz();
+			$best_item->trail($trail,$this->costFunc);
+			file_put_contents("trail.png",$trail->fetch('png'));
+
 			return;
 		}
 
@@ -99,13 +103,14 @@ class Solver{
 		} //ここいるか？
 
 		$cost = $pushing->cost($this->costFunc) +  $pushing->getHowmanyMoved();
-		echo "cost::".$pushing->cost($this->costFunc)." + ". $pushing->getHowmanyMoved()."\n";
 		if(
 			( !$this->isIda || $cost <= $this->cutoff)
 			 && !$duplicating
 		){
 			$this->open[] = $pushing;
 			if($this->memory < count($this->open)) $this->memory = count($this->open);
+		}else{
+			$pushing->removePointer();
 		}
 	}
 
@@ -121,6 +126,10 @@ class Solver{
 	public function evaluate(){
 		echo "time   : ".$this->time."\n";
 		echo "memory : ".$this->memory."\n";
+	}
+
+	public function makeTree($g){
+		$this->start->makeTree($g,$this->costFunc);
 	}
 
 }
