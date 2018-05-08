@@ -82,8 +82,7 @@ class SolverNode{
 	}
 
 	public function removePointer(){
-		$this->pointerFrom = null;
-
+		$this->parent = null;
 	}
 
 	public function getHowmanyMoved(){
@@ -140,8 +139,6 @@ class SolverNode{
 		$g->addNode($this->viewString,['shape'=>'box','fontname'=>'MigMix 2M']);
 		if($this->parent !== null){
 			$g->addEdge([$this->parent->viewString => $this->viewString]);
-		}else{
-			echo "parent is null";
 		}
 		foreach($this->children as $child){
 			$child->makeTree($g);
