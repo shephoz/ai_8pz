@@ -7,55 +7,30 @@ class EightPz{
 
 	private $viewString = "";
 
-	private $howmanyMoved = 0;
-	private $whenOpened = [];
 
 	public function __construct($nums=[0,1,2,3,4,5,6,7,8]){
 		$this->nums = $nums;
 	}
 
-	public function getHowmanyMoved(){
-		return $this->howmanyMoved;
-	}
-	public function setWhenOpened($val){
-		$this->whenOpened[] = $val;
-	}
-	private function setPointer($to){
-		$this->pointerTo[] = $to;
-		$to->pointerFrom = $this;
-	}
-	public function removePointer(){
-		$this->pointerFrom = null;
-
+	public static function equals(EightPz $a, EightPz $b){
+		return $a->toSimpleString() == $b->toSimpleString();
 	}
 
+	public function getNums(){
+		return $this->nums;
+	}
 
 
 	//----------------------------------------------------
 
 
-	public function toString(){
+	public function toSimpleString(){
 		return implode("",$this->nums);
 	}
 
-	public function toViewString($costFunc = null){
-		$r = "";
-		for($i=0;$i<9;$i++){
-			$r .= $this->nums[$i]." ";
-			if($i == 8)   $r .= "(".implode(",",$this->whenOpened).")";
-			if($i%3 == 2) $r .= "\n";
-		}
-		if($costFunc !== null){
-			$cost  = $this->cost($costFunc);
-			$moved = $this->howmanyMoved;
-		 	$r .= "f(n) = ".$cost." + ".$moved."\n     = ".($cost+$moved)."\n";
-		}
-		return $r;
-	}
 
-	public function display($costFunc = null){
-		echo $this->toViewString($costFunc);
-	}
+	//----------------------------------------------------
+
 
 	public function shuffle($howmany){
 		$pz = $this;
@@ -90,35 +65,19 @@ class EightPz{
 	}
 
 	public function move(){
-		$r = [];
 		$zero = $this->findNum(0);
-		foreach($this->listDir() as $dir){
-			$swapped = $this->swap($zero,$zero+$dir);
-			if($this->pointerFrom === null){
-				$this->setPointer($swapped);
-				$swapped->howmanyMoved = $this->howmanyMoved + 1;
-				$r[] = $swapped;
-			}else{
-				$sw = $swapped->toString();
-				$pf = $this->pointerFrom->toString();
-				if($sw != $pf){
-					$this->setPointer($swapped);
-					$swapped->howmanyMoved = $this->howmanyMoved + 1;
-				 	$r[] = $swapped;
-				}
-			}
-		}
-		return $r;
+		return array_map(function($dir) use($zero){
+			return $this->makeSwapped($zero,$zero+$dir);
+		},$this->listDir());
 	}
 
-	private function swap($swap1,$swap2){
+	private function makeSwapped($swap1,$swap2){
 		$nums = $this->nums;
 		$tmp = $nums[$swap1];
 		$nums[$swap1] = $nums[$swap2];
 		$nums[$swap2] = $tmp;
 		return new EightPz($nums);
 	}
-
 
 	//----------------------------------------------------
 
@@ -155,34 +114,5 @@ class EightPz{
 	public function isGoal(){
 		return $this->howmanyWrong() == 0;
 	}
-
-
-	//----------------------------------------------------
-
-	public function makeTree($g,$costFunc){
-		$this->viewString = $this->toViewString($costFunc);
-		$g->addNode($this->viewString,['shape'=>'box']);
-		if($this->pointerFrom !== null){
-			$g->addEdge([$this->pointerFrom->viewString => $this->viewString]);
-		}
-		foreach($this->pointerTo as $to){
-			$to->makeTree($g,$costFunc);
-		}
-	}
-
-	public function trail($g,$costFunc){
-		$this->viewString = $this->toViewString($costFunc);
-		$g->addNode($this->viewString,['shape'=>'box']);
-		$from = $this->pointerFrom;
-		if($from !== null){
-			$g->addEdge([$from->viewString => $this->viewString]);
-			$from->trail($g,$costFunc);
-		}else{
-			$g->addNode("start",['shape'=>'box']);
-			$g->addEdge(["start" => $this->viewString]);
-
-		}
-	}
-
 
 }

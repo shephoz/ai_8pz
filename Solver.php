@@ -3,114 +3,138 @@ require_once  'Image/GraphViz.php';
 
 class Solver{
 	private $start = null;
+	private $costFunc;
+	private $isIda;
+
 	private $open = [];
 	private $opened = [];
-	private $costFunc = "manhattan";
-	//private $costFunc = "howmanyWrong";
-	private $isIda = true;
-	//private $isIda = false;
 
-	private $time = 0;
-	private $memory = 0;
-	private $isSolved = false;
+	private $goal  = null;
 
-	private $cutoff = 1;
-	private $openedOrder = 0;
+	private $totalTime = 0;
+	private $time      = 0;
+	private $memory    = 0;
+	private $isSolved  = false;
 
-	public function __construct(EightPz $start){
-		$this->start = $start;
-		$this->pushToOpen($start);
+	private $cutoff = 5;
+	private $openedOrder = 1;
+
+	public function __construct(EightPz $start, $costFunc, $isIda){
+		$start_node = new SolverNode($start,$this,0);
+		$this->start = $start_node;
+		$this->pushToOpen($start_node);
+		$this->costFunc = $costFunc;
+		$this->isIda    = $isIda;
 	}
+
+	public function getCostFunc(){
+		return $this->costFunc;
+	}
+
+
+	public function run(){
+		$this->start->display();
+		while(!$this->isSolved()){
+			echo "\n--- loop ".$this->totalTime."---\n";
+			$this->open();
+			$this->totalTime++;
+			if($this->totalTime > 100) break; //fgets(STDIN);
+		}
+	}
+
 
 	public function open(){
 		$best_index = null;
-		$best_item  = null;
-		$best_cost  = null;
+		$best_node  = null;
+		$best_f     = null;
 
 		if($this->isIda){
 			// like a stack
 			$best_index = count($this->open) - 1;
-			echo "\n--- cutoff : ".$this->cutoff." ---\n";
 			if($best_index < 0){
-				echo "failed in this cutoff\n";
+				echo "\nfailed in this cutoff\n";
+				echo "--- cutoff : ".($this->cutoff)." -> ".($this->cutoff + 1)." ---\n";
 				$this->cutoff++;
-				$this->pushToOpen($this->start);
 				$this->opened = [];
 				$this->memory = 0;
-				if($cutoff > 100) fgets(STDIN);
+
+				// __constructor
+				$this->pushToOpen($this->start);
+
+				if($this->cutoff > 100) fgets(STDIN);
 				return;
 			}
-			$best_item  = $this->open[$best_index];
-			$best_cost = $best_item->cost($this->costFunc) + $best_item->getHowmanyMoved();
+			$best_node  = $this->open[$best_index];
+			$best_f     = $best_node->calcF($this->costFunc);
 		}else{
-			foreach($this->open as $index => $item){
-				$cost = $item->cost($this->costFunc) +  $item->getHowmanyMoved();
-				if($best_item === null || $best_cost > $cost){
+			foreach($this->open as $index => $node){
+				$f = $node->calcF($this->costFunc);
+				if($best_node === null || $best_f > $f){
 					$best_index = $index;
-					$best_item  = $item;
-					$best_cost  = $cost;
+					$best_node  = $node;
+					$best_f     = $f;
 				}
 			}
-			if($best_item === null){
+			if($best_node === null){
 				echo "failed\n";
 				$this->isSolved = true;
 				return;
 			}
 		}
 
-		echo "\n--- the best one in open is ... ---\n";
-		$best_item->display();
+		echo "\n--- now, open this node (at order ".$this->openedOrder.") ---\n";
+		$best_node->display();
 		$this->popFromOpen($best_index);
 
-		$best_item->setWhenOpened($this->openedOrder);
-		$this->openedOrder++;
-
-		if($best_item->isGoal()){
+		if($best_node->isGoal()){
 			echo "--- this is goal ---\n";
 			$this->isSolved = true;
-
-			$trail = new Image_GraphViz();
-			$best_item->trail($trail,$this->costFunc);
-			file_put_contents("trail.png",$trail->fetch('png'));
-
 			return;
 		}
 
 		$this->time++;
 
-		echo "\n--- added to open ---\n";
-		foreach($best_item->move() as $moved){
-			$this->pushToOpen($moved);
-			$moved->display($this->costFunc);
-		}
-		// echo "\n--- open items is ... ---\n";
-		// foreach($this->open as $item){
-		// 	$item->display($this->costFunc);
-		// }
+		$best_node->extract($this->openedOrder);
+		$this->openedOrder++;
+
+		echo "\n--- There're ".count($this->open)." items to open. They are ... ---\n";
+		SolverNode::displayList($this->open);
+
+		// echo "\n--- There're ".count($this->opened)." items already opened. They are ... ---\n";
+		// SolverNode::displayList($this->opened);
 
 	}
 
 
-	private function pushToOpen($pushing){
+	public function pushToOpen($pushing){
+
 		$duplicating = false;
 		foreach($this->open as $comparing){
-			if($pushing->toString() == $comparing->toString())
+			if(SolverNode::equals($pushing,$comparing)){
 				$duplicating = true;
+			}
 		} //ここいるか？
 		foreach($this->opened as $comparing){
-			if($pushing->toString() == $comparing->toString())
+			if(SolverNode::equals($pushing,$comparing)){
 				$duplicating = true;
+			}
 		} //ここいるか？
 
-		$cost = $pushing->cost($this->costFunc) +  $pushing->getHowmanyMoved();
-		if(
-			( !$this->isIda || $cost <= $this->cutoff)
-			 && !$duplicating
-		){
-			$this->open[] = $pushing;
-			if($this->memory < count($this->open)) $this->memory = count($this->open);
+		if($this->isIda){
+			$f = $pushing->calcF();
+			if(!$duplicating && $f <= $this->cutoff){
+				$this->open[] = $pushing;
+				if($this->memory < count($this->open)) $this->memory = count($this->open);
+			}else{
+				$pushing->removePointer();
+			}
 		}else{
-			$pushing->removePointer();
+			if(!$duplicating){
+				$this->open[] = $pushing;
+				if($this->memory < count($this->open)) $this->memory = count($this->open);
+			}else{
+				$pushing->removePointer();
+			}
 		}
 	}
 
@@ -128,8 +152,10 @@ class Solver{
 		echo "memory : ".$this->memory."\n";
 	}
 
-	public function makeTree($g){
-		$this->start->makeTree($g,$this->costFunc);
+	public function makeTree(){
+		$g = new Image_GraphViz();
+		$this->start->makeTree($g);
+		file_put_contents("tree.png",$g->fetch('png'));
 	}
 
 }
