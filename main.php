@@ -5,32 +5,22 @@ require_once          "Solver.php";
 require_once      "SolverNode.php";
 
 $eightPz = new EightPz(
-[1,5,4,0,2,8,6,7,3]
+//[4,3,2,6,1,5,0,7,8]
 );
-//$eightPz->shuffle(4);
+$eightPz->shuffle(10);
 
 echo json_encode($eightPz->getNums())."\n";
 
-echo "\nman,a*\n";
-$solver = new Solver($eightPz,"manhattan",false);
-$solver->run(false);
-$solver->evaluate();
-$solver->makeTree("manhattan-a");
-
-echo "\nman,ida*\n";
-$solver = new Solver($eightPz,"manhattan",true);
-$solver->run(false);
-$solver->evaluate();
-$solver->makeTree("manhattan-ida");
-
-echo "\nhowmany,a*\n";
-$solver = new Solver($eightPz,"howmanyWrong",false);
-$solver->run(false);
-$solver->evaluate();
-$solver->makeTree("howmany-a");
-
-echo "\nhowmany,ida*\n";
-$solver = new Solver($eightPz,"howmanyWrong",true);
-$solver->run(false);
-$solver->evaluate();
-$solver->makeTree("howmany-ida");
+foreach([
+	"manhattan-a"   => new Solver($eightPz,"manhattan",false),
+	"manhattan-ida" => new Solver($eightPz,"manhattan",true),
+	"howmany-a"     => new Solver($eightPz,"howmanyWrong"  ,false),
+	"howmany-ida"   => new Solver($eightPz,"howmanyWrong"  ,true),
+] as $label => $solver){
+	$solver->run(false);
+	echo "\n".$label." : ";
+	echo $solver->isSolved()? "solved\n":"failed\n";
+	$solver->evaluate();
+	$solver->makeTree("tree-".$label);
+	//$solver->Trail("trail-".$label);
+}

@@ -2,18 +2,13 @@
 
 class EightPz{
 	private $nums;
-	private $pointerFrom = null;
-	private $pointerTo   = [];
-
-	private $viewString = "";
-
 
 	public function __construct($nums=[0,1,2,3,4,5,6,7,8]){
 		$this->nums = $nums;
 	}
 
 	public static function equals(EightPz $a, EightPz $b){
-		return $a->toSimpleString() == $b->toSimpleString();
+		return $a->toString() == $b->toString();
 	}
 
 	public function getNums(){
@@ -24,7 +19,7 @@ class EightPz{
 	//----------------------------------------------------
 
 
-	public function toSimpleString(){
+	public function toString(){
 		return implode("",$this->nums);
 	}
 

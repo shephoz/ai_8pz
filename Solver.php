@@ -12,15 +12,17 @@ class Solver{
 	private $goal  = null;
 
 	private $totalTime = 0;
-	private $time      = 0;
+	private $time      = 1;
 	private $memory    = 0;
 
 	private $cutoff = 5;
+	private $timeLimit = 10000;
 
 	public function __construct(EightPz $start, $costFunc, $isIda){
 		$start_node = new SolverNode($start,$this,0);
 		$this->start = $start_node;
 		$this->pushToOpen($start_node);
+
 		$this->costFunc = $costFunc;
 		$this->isIda    = $isIda;
 	}
@@ -30,14 +32,14 @@ class Solver{
 	}
 
 
-	public function run($showMessage){
+	public function run($showMessage=true){
 		if(!$showMessage) ob_start();
 		$this->start->display();
 		while(!$this->isSolved()){
 			echo "\n--- loop ".$this->totalTime."---\n";
 			$this->open();
 			$this->totalTime++;
-			if($this->totalTime > 100) break; //fgets(STDIN);
+			if($this->totalTime > $this->timeLimit) break;
 		}
 		if(!$showMessage) ob_end_clean();
 	}
@@ -48,18 +50,10 @@ class Solver{
 		$best_node  = null;
 		$best_f     = null;
 
-		// // like a stack
-		// $best_index = count($this->open) - 1;
-		// if($best_index < 0){
-		// 	if($this->cutoff > 100) fgets(STDIN);
-		// 	return;
-		// }
-		// $best_node  = $this->open[$best_index];
-		// $best_f     = $best_node->calcF($this->costFunc);
-
-		foreach(array_reverse($this->open) as $index => $node){
+		foreach($this->open as $index => $node){
 			$f = $node->calcF($this->costFunc);
-			if($best_node === null || $best_f > $f){
+			if($best_node === null || $f <= $best_f){
+			// $fと$best_fの比較を"<="にするとスタック、"<"にするとキュー
 				$best_index = $index;
 				$best_node  = $node;
 				$best_f     = $f;
@@ -95,10 +89,6 @@ class Solver{
 
 		echo "\n--- There're ".count($this->open)." items to open. They are ... ---\n";
 		SolverNode::displayList($this->open);
-
-		// echo "\n--- There're ".count($this->opened)." items already opened. They are ... ---\n";
-		// SolverNode::displayList($this->opened);
-
 	}
 
 
@@ -110,11 +100,11 @@ class Solver{
 				$duplicating = true;
 			}
 		} //ここいるか？
-		foreach($this->opened as $comparing){
-			if(SolverNode::equals($pushing,$comparing)){
-				$duplicating = true;
-			}
-		} //ここいるか？
+		// foreach($this->opened as $comparing){
+		// 	if(SolverNode::equals($pushing,$comparing)){
+		// 		$duplicating = true;
+		// 	}
+		// } //ここいるか？
 
 		if($this->isIda){
 			$f = $pushing->calcF();
@@ -136,7 +126,7 @@ class Solver{
 
 	private function popFromOpen($index){
 		$this->opened[] = $this->open[$index];
-		array_splice($this->open,$index);
+		array_splice($this->open,$index,1);
 	}
 
 	public function isSolved(){
@@ -154,4 +144,9 @@ class Solver{
 		file_put_contents($filename.".png",$g->fetch('png'));
 	}
 
+	public function trail($filename){
+		$g = new Image_GraphViz();
+		$this->goal->trail($g);
+		file_put_contents($filename.".png",$g->fetch('png'));
+	}
 }
